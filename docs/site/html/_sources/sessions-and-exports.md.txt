@@ -1,0 +1,209 @@
+Here’s the **final, full version** of your `sessions-and-exports.md`, rewritten professionally based on the *official project brief*, your current implementation (from our chats), and the PoseApp architecture.
+
+---
+
+## 📊 `sessions-and-exports.md`
+
+```markdown
+# Sessions and Exports
+
+PoseApp automatically logs and exports every training or evaluation session.  
+A *session* includes all freestyle and guided activities performed until the user ends it manually or closes the app.  
+Each session is fully offline and stored locally for analysis and reproducibility.
+
+---
+
+## 🧩 Session Lifecycle
+
+1. **Start Session**  
+   - Triggered automatically when the app begins recording.  
+   - A new timestamped directory is created under `/sessions/<ISO8601_TIMESTAMP>/`.
+
+2. **During Session**  
+   - Each activity (guided or freestyle) appends its raw keypoints, computed angles, gait metrics, and scores to the active session.  
+   - Guided activities also log per-rep scores and symmetry indices.
+
+3. **Stop Session / Exit App**  
+   - When you click **Stop Session** or close the app, the final session summary is written to disk.  
+   - This ensures **one unified session report** across multiple activities.
+
+---
+
+## 📂 Export Directory Structure
+
+Each session directory is timestamped and follows a standardized layout:
+
+```
+
+/sessions/2025-10-22T20-35-11Z/
+├─ raw_keypoints.json       # Per-frame keypoints and visibility
+├─ angles.csv               # Time, joint name, side, angle (deg)
+├─ gait.csv                 # Step metrics and cadence
+├─ summary.json             # Combined per-session summary
+└─ scorecards/              # Optional per-activity sub-reports
+
+````
+
+---
+
+## 📜 Export File Details
+
+### 🧠 raw_keypoints.json
+Contains every detected keypoint with coordinates and visibility per frame.
+
+```json
+{
+  "frame_id": 45,
+  "timestamp": 1739.58,
+  "backend": "MoveNet-Thunder",
+  "keypoints": {
+    "left_knee": [0.421, 0.743, 0.98],
+    "right_knee": [0.576, 0.745, 0.99],
+    "left_ankle": [0.422, 0.812, 0.97]
+  }
+}
+````
+
+---
+
+### 📐 angles.csv
+
+Stores all computed joint angles for each frame.
+
+| Column       | Description                          |
+| ------------ | ------------------------------------ |
+| `timestamp`  | Time in seconds since session start  |
+| `joint_name` | e.g. `knee_L`, `hip_R`, `shoulder_L` |
+| `side`       | Left or Right                        |
+| `angle_deg`  | Smoothed joint angle (degrees)       |
+
+Example:
+
+```
+timestamp,joint_name,side,angle_deg
+1739.38,knee_L,Left,92.6
+1740.02,knee_L,Left,95.3
+```
+
+---
+
+### 🏃 gait.csv
+
+Stores gait metrics recorded during freestyle motion.
+
+| Column                             | Description                         |
+| ---------------------------------- | ----------------------------------- |
+| `cadence`                          | Steps per minute                    |
+| `step_time_L`, `step_time_R`       | Time between heel strikes           |
+| `rel_step_len_L`, `rel_step_len_R` | Step length normalized by hip width |
+| `SI`                               | Symmetry Index                      |
+| `timestamp`                        | Reference frame timestamp           |
+
+Example:
+
+```
+cadence,step_time_L,step_time_R,rel_step_len_L,rel_step_len_R,SI,timestamp
+112.5,0.56,0.58,1.12,1.08,3.6,1745.2
+```
+
+---
+
+### 🧾 summary.json
+
+The unified session report. It aggregates all activities (guided and freestyle) under one structure.
+
+**Structure:**
+
+```json
+{
+  "session_id": "sess-20251022-203511",
+  "device_id": "glass-01",
+  "os": "Ubuntu 24.04",
+  "cpu": "Ryzen 5 5600U",
+  "start_time": "2025-10-22T20:35:11Z",
+  "end_time": "2025-10-22T20:55:30Z",
+  "activities": [
+    {
+      "name": "Squat",
+      "reps_completed": 5,
+      "mean_accuracy": 0.93,
+      "form_stability": 0.88,
+      "symmetry_index": 4.6
+    },
+    {
+      "name": "Arm Abduction",
+      "reps_completed": 5,
+      "mean_accuracy": 0.90,
+      "symmetry_index": 6.2
+    }
+  ],
+  "overall_session_score": 0.91,
+  "export_files": [
+    "angles.csv",
+    "gait.csv",
+    "summary.json"
+  ]
+}
+```
+
+---
+
+## 🧮 Session Summary Dialog (UI)
+
+* Accessible from the **toolbar → Session Summary** or automatically after pressing **Stop Session**.
+* Displays:
+
+  * Total session duration and FPS
+  * Activity list with scores
+  * Mean form stability and symmetry index
+  * Export buttons for CSV/JSON
+* The summary **remains active for the full session**, allowing multiple guided activities to be aggregated.
+
+---
+
+## ⚙️ Export Behavior
+
+| Action            | Effect                                           |
+| ----------------- | ------------------------------------------------ |
+| **Auto Export**   | CSV/JSON written continuously during runtime     |
+| **Manual Export** | Trigger from toolbar anytime                     |
+| **Stop Session**  | Finalizes and writes `summary.json`              |
+| **Exit App**      | Gracefully closes threads, saves pending buffers |
+
+All timestamps use **monotonic time**, ensuring replay consistency across reruns.
+
+---
+
+## 🧾 Determinism & Validation
+
+Each session is **reproducible** — reprocessing the same input yields identical CSV/JSON exports.
+This is verified by the deterministic timestamp generator and consistent angle math across backends.
+
+**Testing checkpoints:**
+
+* Session runs offline (no network access)
+* FPS ≥ 20 at 720p on i5/Ryzen5
+* CSV/JSON schemas validated by test suite
+* Exports identical for identical input video
+
+---
+
+## 🧠 Developer Notes
+
+* Exports are flushed incrementally via the `SessionLogger` class.
+* JSON and CSV writers handle file locking to avoid data loss on crashes.
+* The session summary persists across all guided activities in a single runtime.
+* Session folders are human-readable and timestamped for easy archival.
+
+---
+
+## 🧱 Example Workflow
+
+1. Start PoseApp → Select model → Guided mode → *Squat*
+2. Perform 5 reps → score appended
+3. Switch to *Arm Abduction* → perform 5 reps → score appended
+4. Open Session Summary → see both activities listed
+5. Click **Export → summary.json + CSV**
+6. Exit → session folder finalized under `/sessions/<timestamp>/`
+
+

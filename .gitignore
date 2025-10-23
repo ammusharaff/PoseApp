@@ -1,0 +1,16 @@
+# Ignore build artifacts and environments
+build/
+dist/
+*.spec
+__pycache__/
+*.pyc
+.venv/
+*.log
+
+# Ignore platform-specific
+.DS_Store
+Thumbs.db
+
+# Ignore model weights if they’re large
+models/*.tflite
+models/*.onnx

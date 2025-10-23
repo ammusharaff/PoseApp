@@ -1,0 +1,22 @@
+PoseApp Documentation
+=====================
+
+PoseApp is a cross-platform offline desktop application built for human pose estimation, joint-angle analytics, and guided movement scoring.  
+It supports both **freestyle** and **guided** modes, live gait metrics, and exports to CSV/JSON for offline review.  
+The system runs entirely offline, using **MediaPipe** or **MoveNet (Lightning/Thunder)** models selectable at runtime.
+
+.. toctree::
+   :maxdepth: 2
+   :caption: User Guide
+
+   getting-started
+   usage
+   guided-mode
+   freestyle-mode
+   sessions-and-exports
+
+.. toctree::
+   :maxdepth: 2
+   :caption: API Reference
+
+   api/modules

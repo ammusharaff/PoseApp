@@ -1,0 +1,6 @@
+numpy
+opencv-python
+PySide6
+mediapipe>=0.10.0
+tflite-runtime; platform_system=="Linux"
+tensorflow==2.13.0; platform_system=="Windows"

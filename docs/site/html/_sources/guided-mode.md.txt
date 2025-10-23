@@ -1,0 +1,61 @@
+# Guided Mode
+
+In **Guided Mode**, the app assists the user in performing target activities, evaluates each repetition, and scores performance and symmetry in real time.
+
+---
+
+## How It Works
+
+1. Select **Guided Mode** from the toolbar.
+2. Choose an activity from the dropdown (e.g., *Squat*, *Arm Abduction*, *Calf Raise*).
+3. A **GIF preview** appears below the selection showing the correct movement.
+4. Click **Start** to begin the guided session.
+5. The app:
+   - Detects keypoints in real time.
+   - Computes joint angles per frame.
+   - Segments repetitions.
+   - Calculates accuracy, form stability, and symmetry index.
+6. The live chart on the right displays the tracked angles during each repetition.
+
+---
+
+## Activity Library
+
+| Activity | Key Angles | Target Reps | Primary Criteria |
+|-----------|-------------|-------------|------------------|
+| Squat | Knee, Hip, Ankle | 5 | Knee flexion peak depth |
+| Arm Abduction | Shoulder | 5 (each side) | Peak 90°–120° |
+| Forward Flexion | Shoulder | 5 | Flexion to 90° |
+| Calf Raise | Ankle | 10 | Plantarflexion amplitude |
+| Jumping Jack | Shoulder, Hip | 10 | Symmetric rhythm |
+
+All target guides are stored in `/assets/guides/` as `.gif` files.
+
+---
+
+## Scoring Metrics
+
+- **Accuracy Bands:**  
+  - Green ≤ 5°  
+  - Amber ≤ 10°  
+  - Red > 10°  
+- **Form Stability:** Std. deviation of top 20% ROM → [0, 1]
+- **Final Trial Score:** `0.7 * repetition_mean + 0.3 * form_stability`
+- **Symmetry Index:** `SI = 100 * |L - R| / (0.5 * (L + R) + 1e-6)` (penalized if SI > 15)
+
+---
+
+## Session Summary
+
+After completing each activity:
+- The session appends its score to the **active session log**.
+- Session continues for multiple activities until **Stop Session** is pressed or app is closed.
+- A consolidated **summary.json** is produced containing all sets, averages, and per-activity details.
+
+---
+
+## Tips
+
+- Keep the camera perpendicular (side view for sagittal angles).
+- Use good lighting for better joint visibility.
+- If tracking flickers, switch backend (MediaPipe vs MoveNet).

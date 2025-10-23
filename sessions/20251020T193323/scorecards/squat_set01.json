@@ -1,0 +1,29 @@
+{
+  "activity": "squat",
+  "label": "Squat",
+  "set_idx": 1,
+  "reps_counted": 8,
+  "target_reps": 5,
+  "rep_scores": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "form_stability": 0.9664840375299794,
+  "symmetry_index": 0.0,
+  "final_percent": 29.0,
+  "scoring_rules": {
+    "bands": {
+      "Green": "\u22645\u00b0",
+      "Amber": "\u226410\u00b0",
+      "Red": ">10\u00b0 or missing"
+    },
+    "rep_score": "mean of joint band scores (G=1, A=0.5, R=0)",
+    "final": "0.7 * repetition_mean + 0.3 * form_stability; SI>15 penalized"
+  }
+}

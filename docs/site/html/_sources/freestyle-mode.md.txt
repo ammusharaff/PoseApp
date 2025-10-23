@@ -1,0 +1,49 @@
+# Freestyle Mode
+
+Freestyle Mode provides real-time joint-angle visualization and gait metrics without predefined targets or activities.
+
+---
+
+## Overview
+
+This mode is ideal for exploring general movement — walking, running, squats, or stretching — with live feedback.
+
+The app displays:
+- Real-time skeleton overlay.
+- Key joint angles (e.g., knee, hip, shoulder).
+- Bottom gait strip: cadence, step times, stride symmetry.
+
+---
+
+## Gait Metrics
+
+| Parameter | Description |
+|------------|-------------|
+| **Cadence** | Steps per minute estimated from ankle motion |
+| **Step Time (L/R)** | Time between consecutive heel strikes |
+| **Relative Step Length** | Pixel distance normalized by hip width |
+| **Stride Symmetry** | Comparison between left/right step times |
+| **Vertical Excursion** | Vertical oscillation of the hip center |
+
+> All gait values are relative unless a known scale or user height is provided.
+
+---
+
+## Live Angles Panel
+
+The **Right Panel** shows the most relevant angles in a rolling 10-second window.  
+You can auto-pick all visible joints or select specific angles from a dropdown.
+
+Angles include:
+- Neck flexion/extension
+- Shoulder abduction/flexion
+- Elbow flexion
+- Hip/knee flexion
+- Ankle plantar/dorsiflexion
+
+---
+
+## Exportable Outputs
+- `/sessions/<timestamp>/angles.csv`
+- `/sessions/<timestamp>/gait.csv`
+- `/sessions/<timestamp>/raw_keypoints.json`

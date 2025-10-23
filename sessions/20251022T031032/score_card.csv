@@ -1,0 +1,4 @@
+timestamp,activity,set_idx,reps_counted,target_reps,mean_rep_score,form_stability,symmetry_index,final_percent
+2025-10-22 03:10:50,arm_abduction,Arm Abduction,2,5,5,0.0500,0.0000,0.0000,3.50
+2025-10-22 03:10:51,arm_abduction,Arm Abduction,2,6,5,0.1250,0.0000,0.0000,8.80
+2025-10-22 03:11:38,squat,Squat,1,5,5,0.0000,0.9628,0.0000,28.90

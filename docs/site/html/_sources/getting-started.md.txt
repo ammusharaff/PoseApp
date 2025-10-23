@@ -1,0 +1,81 @@
+# Getting Started
+
+PoseApp is a **cross-platform offline desktop app** for human pose estimation, gait analysis, and guided exercise scoring.  
+It runs entirely offline, with all models bundled, and supports Linux (AppImage), Windows (.exe), and macOS (.dmg optional).
+
+---
+
+## Installation
+
+### 1. System Requirements
+- **OS:** Fedora, Ubuntu 22.04+, Windows 10+, macOS (optional)
+- **CPU:** Intel i5 / Ryzen 5 or better
+- **Python (for source run):** 3.10–3.12  
+- **RAM:** ≥ 8 GB  
+- **Camera:** Any standard UVC webcam  
+
+---
+
+### 2. Setup from Source
+
+Clone the repository and create a virtual environment:
+
+```bash
+git clone <your-private-repo-url> PoseApp
+cd PoseApp
+python -m venv .venv
+source .venv/bin/activate   # (Windows: .\.venv\Scripts\activate)
+pip install -r requirements.txt
+
+---
+
+## Run the app:
+
+python -m app.main
+
+
+## Folder Structure
+
+PoseApp/
+ ├─ src/poseapp/           # Application source
+ │   ├─ ui/                # UI classes (MainWindow, RightPanel)
+ │   ├─ geometry/          # Angle math and keypoint mapping
+ │   ├─ gait/              # Gait tracking and cadence logic
+ │   ├─ analysis/          # Rep segmentation, scoring, symmetry
+ │   ├─ activities/        # Activity definitions and targets
+ │   └─ scoring/           # Final score computation
+ ├─ assets/                # GIFs, icons, UI media
+ ├─ models/                # MediaPipe / MoveNet models
+ ├─ sessions/              # Offline session exports
+ ├─ docs/                  # Sphinx documentation
+ └─ requirements.txt
+
+
+# UI Tour
+
+Toolbar: Camera • Start/Stop • Mode (Freestyle/Guided) • Settings • Export • Live Angles (reopen right dock).
+
+Left Dock (Guided): Activity selector, GIF preview, targets, Start Trial.
+
+Right Dock (Live Angles): Rolling 10-second plots; auto-pick or manual dropdown to choose angles.
+
+Overlays: Skeleton, joint-angle labels, gait strip (cadence, step times, symmetry).
+
+Shortcuts: S Start/Stop • G Mode toggle • M Model toggle • E Export • 1..5 Quick activity select.
+
+
+# Modes
+
+## Freestyle
+
+    Draws skeleton and angle readouts.
+
+    Gait tracker estimates cadence, step timing, relative step length, and symmetry.
+
+## Guided
+
+    Choose an activity (e.g., Squat, Arm Abduction).
+
+    App shows a GIF, counts down, segments reps automatically, scores accuracy, and reports symmetry.
+
+    Multiple guided activities can be performed in one session; the session summary aggregates them.

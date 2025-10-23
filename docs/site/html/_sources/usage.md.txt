@@ -1,0 +1,64 @@
+
+---
+
+## ⚙️ `usage.md`
+```markdown
+# Application Usage Overview
+
+PoseApp provides two primary operating modes: **Freestyle** and **Guided**, accessible via the top toolbar.
+
+---
+
+## Toolbar
+
+| Control | Description |
+|----------|--------------|
+| 🎥 **Camera Selector** | Choose from available webcam devices |
+| ▶️ **Start / Stop** | Begin or stop real-time pose tracking |
+| 🧍 **Mode Selector** | Switch between Freestyle or Guided modes |
+| 🧠 **Model Selector** | Choose MoveNet (Lightning/Thunder) or MediaPipe |
+| 📈 **Live Angles Panel** | Toggle the live angle chart view |
+| 💾 **Export** | Save session data to CSV/JSON |
+| ⚙️ **Settings** | Access preferences or debug options |
+
+Keyboard Shortcuts:
+- `S` – Start/Stop  
+- `G` – Switch mode  
+- `M` – Switch model  
+- `E` – Export  
+- `1–5` – Quick select activity  
+
+---
+
+## Backends
+
+### MoveNet (TFLite)
+- High-speed, full-body inference.
+- Two variants: **Lightning** (fast, lightweight) and **Thunder** (higher accuracy).
+- Ideal for **freestyle** mode.
+
+### MediaPipe (Holistic/Hands)
+- Multi-pose and hand-gesture support.
+- Best for **guided** tasks or detailed limb tracking.
+
+Model switching occurs instantly at runtime and is preserved across sessions.
+
+---
+
+## Layout
+
+- **Left Panel** → Activity/GIF preview (Guided mode)
+- **Main View** → Camera feed with pose overlay and joint angles
+- **Right Panel** → Live 10-second rolling charts of selected angles
+- **Bottom Bar** → Status and session messages
+
+---
+
+## Typical Workflow
+
+1. Select your **camera** and ensure video feed appears.  
+2. Choose **MoveNet** or **MediaPipe**.  
+3. Pick **mode** (Freestyle or Guided).  
+4. Hit **Start (S)** to begin live tracking.  
+5. Observe angles, gait, and overlays in real time.  
+6. Stop when done or switch mode seamlessly.

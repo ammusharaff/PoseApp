@@ -1,0 +1,72 @@
+{
+  "mode": "guided",
+  "started_at": "2025-10-22 03:10:32",
+  "ended_at": "2025-10-22 03:11:51",
+  "system": {
+    "os": "Windows-10-10.0.26100-SP0",
+    "python": "3.9.13",
+    "model": "MoveNet Thunder"
+  },
+  "activities": [
+    {
+      "activity": "arm_abduction",
+      "label": "Arm Abduction",
+      "set_idx": 2,
+      "reps_counted": 5,
+      "target_reps": 5,
+      "rep_scores": [],
+      "form_stability": 0.0,
+      "symmetry_index": 0.0,
+      "final_percent": 3.5,
+      "scoring_rules": {
+        "bands": {
+          "Green": "\u22645\u00b0",
+          "Amber": "\u226410\u00b0",
+          "Red": ">10\u00b0 or missing"
+        },
+        "rep_score": "mean of joint band scores (G=1, A=0.5, R=0)",
+        "final": "0.7 * repetition_mean + 0.3 * form_stability; SI>15 penalized"
+      }
+    },
+    {
+      "activity": "arm_abduction",
+      "label": "Arm Abduction",
+      "set_idx": 2,
+      "reps_counted": 6,
+      "target_reps": 5,
+      "rep_scores": [],
+      "form_stability": 0.0,
+      "symmetry_index": 0.0,
+      "final_percent": 8.8,
+      "scoring_rules": {
+        "bands": {
+          "Green": "\u22645\u00b0",
+          "Amber": "\u226410\u00b0",
+          "Red": ">10\u00b0 or missing"
+        },
+        "rep_score": "mean of joint band scores (G=1, A=0.5, R=0)",
+        "final": "0.7 * repetition_mean + 0.3 * form_stability; SI>15 penalized"
+      }
+    },
+    {
+      "activity": "squat",
+      "label": "Squat",
+      "set_idx": 1,
+      "reps_counted": 5,
+      "target_reps": 5,
+      "rep_scores": [],
+      "form_stability": 0.9628071962817634,
+      "symmetry_index": 0.0,
+      "final_percent": 28.9,
+      "scoring_rules": {
+        "bands": {
+          "Green": "\u22645\u00b0",
+          "Amber": "\u226410\u00b0",
+          "Red": ">10\u00b0 or missing"
+        },
+        "rep_score": "mean of joint band scores (G=1, A=0.5, R=0)",
+        "final": "0.7 * repetition_mean + 0.3 * form_stability; SI>15 penalized"
+      }
+    }
+  ]
+}

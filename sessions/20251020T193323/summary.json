@@ -1,0 +1,92 @@
+{
+  "mode": "guided",
+  "started_at": "2025-10-20 19:33:23",
+  "ended_at": "2025-10-20 19:34:19",
+  "system": {
+    "os": "Windows-10-10.0.26100-SP0",
+    "python": "3.9.13",
+    "model": "MoveNet Lightning"
+  },
+  "activities": [
+    {
+      "activity": "squat",
+      "label": "Squat",
+      "set_idx": 1,
+      "reps_counted": 5,
+      "target_reps": 5,
+      "rep_scores": [],
+      "form_stability": 0.9567511791999671,
+      "symmetry_index": 0.0,
+      "final_percent": 28.7,
+      "scoring_rules": {
+        "bands": {
+          "Green": "\u22645\u00b0",
+          "Amber": "\u226410\u00b0",
+          "Red": ">10\u00b0 or missing"
+        },
+        "rep_score": "mean of joint band scores (G=1, A=0.5, R=0)",
+        "final": "0.7 * repetition_mean + 0.3 * form_stability; SI>15 penalized"
+      }
+    },
+    {
+      "activity": "squat",
+      "label": "Squat",
+      "set_idx": 1,
+      "reps_counted": 6,
+      "target_reps": 5,
+      "rep_scores": [],
+      "form_stability": 0.9674911305404162,
+      "symmetry_index": 0.0,
+      "final_percent": 29.0,
+      "scoring_rules": {
+        "bands": {
+          "Green": "\u22645\u00b0",
+          "Amber": "\u226410\u00b0",
+          "Red": ">10\u00b0 or missing"
+        },
+        "rep_score": "mean of joint band scores (G=1, A=0.5, R=0)",
+        "final": "0.7 * repetition_mean + 0.3 * form_stability; SI>15 penalized"
+      }
+    },
+    {
+      "activity": "squat",
+      "label": "Squat",
+      "set_idx": 1,
+      "reps_counted": 7,
+      "target_reps": 5,
+      "rep_scores": [],
+      "form_stability": 0.9667782794390882,
+      "symmetry_index": 0.0,
+      "final_percent": 29.0,
+      "scoring_rules": {
+        "bands": {
+          "Green": "\u22645\u00b0",
+          "Amber": "\u226410\u00b0",
+          "Red": ">10\u00b0 or missing"
+        },
+        "rep_score": "mean of joint band scores (G=1, A=0.5, R=0)",
+        "final": "0.7 * repetition_mean + 0.3 * form_stability; SI>15 penalized"
+      }
+    },
+    {
+      "activity": "squat",
+      "label": "Squat",
+      "set_idx": 1,
+      "reps_counted": 8,
+      "target_reps": 5,
+      "rep_scores": [],
+      "form_stability": 0.9664840375299794,
+      "symmetry_index": 0.0,
+      "final_percent": 29.0,
+      "scoring_rules": {
+        "bands": {
+          "Green": "\u22645\u00b0",
+          "Amber": "\u226410\u00b0",
+          "Red": ">10\u00b0 or missing"
+        },
+        "rep_score": "mean of joint band scores (G=1, A=0.5, R=0)",
+        "final": "0.7 * repetition_mean + 0.3 * form_stability; SI>15 penalized"
+      }
+    }
+  ]
+}
