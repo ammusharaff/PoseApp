@@ -14,3 +14,16 @@ Thumbs.db
 # Ignore model weights if they’re large
 models/*.tflite
 models/*.onnx
+PoseApp-x86_64.AppImage
+build/
+dist/
+*.spec
+__pycache__/
+*.pyc
+.venv/
+*.log
+packaging/linux/AppDir/
+packaging/linux/out/
+*.AppImage
+*.exe
+_internal/
