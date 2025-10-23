@@ -1,0 +1,80 @@
+# 🧾 PoseApp License Agreement
+
+Copyright (c) 2025 A Mohammed Musharaff  
+Email: musharaffamohammed@gmail.com  
+
+---
+
+## 🔹 License Summary
+
+PoseApp is distributed under a **dual license** model:
+
+### 1. **Open-Source License (MIT License)**  
+Permitted for:
+- Personal, academic, research, or non-commercial use.
+- Modification, redistribution, and adaptation with attribution.
+
+You **must** include this license text and author credit in any derivative works.
+
+### 2. **Commercial License (Proprietary)**  
+For any commercial distribution, integration, or sale,  
+**explicit written permission** from the author is required.  
+Please contact **musharaffamohammed@gmail.com** for commercial licensing terms.
+
+---
+
+## 🔸 MIT License (Open-Source Use)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+- The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.  
+- Proper credit must be given to **A Mohammed Musharaff** as the original author.
+
+**THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND**, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.  
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+---
+
+## 🔒 Commercial License (Proprietary Use)
+
+Any commercial usage of PoseApp (including but not limited to redistribution, SaaS integration, OEM bundling, or resale) requires a **commercial license** from the author.
+
+To obtain a commercial license, contact:
+- 📧 **musharaffamohammed@gmail.com**
+
+Without such permission, commercial use constitutes a breach of copyright and intellectual property rights.
+
+---
+
+## 🔹 Third-Party Components
+
+PoseApp includes open-source libraries under compatible licenses such as:
+- PySide6 (LGPL-3)
+- TensorFlow Lite (Apache-2)
+- OpenCV (Apache-2)
+- Matplotlib (PSF)
+- NumPy (BSD-3)
+- PyInstaller (GPL-2)
+
+All corresponding licenses are included in the `/licenses/` folder or linked in `COMPLIANCE.md`.
+
+---
+
+## 🧱 Trademarks and Attribution
+
+- The name “PoseApp” and the associated logo are trademarks of **A Mohammed Musharaff**.
+- Use of these trademarks requires explicit permission.
+
+---
+
+## 📅 Version
+
+**PoseApp v1.0.0 (2025)**  
+Licensed under **MIT (Non-Commercial)** and **Proprietary (Commercial)** terms.
+
+---
+
+### 👨‍💻 Author
+**A Mohammed Musharaff**  
+📧 musharaffamohammed@gmail.com  
+© 2025 All rights reserved.
