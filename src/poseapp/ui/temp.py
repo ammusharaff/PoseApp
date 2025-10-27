@@ -1,4 +1,4 @@
-# src/poseapp/ui/main_window.py
+'''# src/poseapp/ui/main_window.py
 import os
 import json
 import math
@@ -2161,3 +2161,12 @@ class MainWindow(QtWidgets.QMainWindow):
         idx = max(0, min(idx, len(keys)-1))
         key = keys[idx]
         self.on_start_trial(key)
+'''
+
+import cv2
+cap = cv2.VideoCapture(0)
+if not cap.isOpened():
+    print("Camera not accessible.")
+else:
+    print("Camera is working.")
+cap.release()

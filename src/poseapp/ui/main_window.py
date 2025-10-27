@@ -5,6 +5,8 @@ from collections import deque  # efficient FIFO used for time-series buffers
 from PySide6 import QtCore, QtGui, QtWidgets  # Qt UI framework (signals, widgets, etc.)
 from PySide6.QtCore import QUrl  # URL class for opening local docs
 from PySide6.QtGui import QAction  # toolbar actions
+import shutil
+from datetime import datetime
 
 # Pull global configuration values / constants and BackendChoice dataclass
 from ..config import (
@@ -30,6 +32,7 @@ from .mode_guided_panel import GuidedPanel
 from ..analysis.activity_rules import assess_activity_rep
 # Small mixin to show GIF previews in guided panel
 from .guided_helpers import GifPreviewMixin
+from ..filters.one_euro import OneEuro
 
 
 # new modular imports
@@ -63,12 +66,21 @@ class MainWindow(QtWidgets.QMainWindow):  # main application window (central con
         self._gif_helper = GifPreviewMixin()  # helper to manage guided preview GIF
         self._autoswitch_cooldown_until = 0.0
 
-
+        self._one_euro_filters = {}
         self.worker = None  # VideoWorker instance (created when starting)
         self.worker_thread = None  # QThread that hosts the worker
         self._current_cam_index = CAM_INDEX  # default camera index from config
+        self._current_fps = 30  # Default to 30 fps, safe for all cameras
+
         QtCore.QTimer.singleShot(0, self.build_ui)  # defer building UI to allow full init
 
+    def score_series_against_template(self, observed, reference):
+        observed = np.array(observed)
+        reference = np.array(reference)
+        length = min(len(observed), len(reference))
+        return float(np.nanmean((observed[:length] - reference[:length]) ** 2))
+    
+    
     # ---------------- UI & toolbar ----------------
     def build_ui(self):
         self.status = self.statusBar()  # system status bar at bottom
@@ -86,12 +98,26 @@ class MainWindow(QtWidgets.QMainWindow):  # main application window (central con
         self.cmb_backend.currentIndexChanged.connect(self.on_backend_change)  # react to change
         self.cmb_backend.setVisible(False)  # hide unless you want to expose manual control
 
-        self.cmb_mode = QtWidgets.QComboBox(); self.cmb_mode.addItems(["Freestyle", "Guided"])  # app modes
+        self.cmb_mode = QtWidgets.QComboBox()
+        self.cmb_mode.addItems(["Freestyle", "Guided"])  # app modes
         self.cmb_mode.currentIndexChanged.connect(self.on_mode_change)  # update UI/logic on mode switch
 
-        self.cmb_camera = QtWidgets.QComboBox()  # camera device selector
+        self.cmb_camera = QtWidgets.QComboBox(self)  # camera device selector
         self._cams = enumerate_cameras(10)  # probe camera indices [0..10]
         self.cmb_camera.clear()  # clear in case of rebuild
+        for idx, label in self._cams:
+            self.cmb_camera.addItem(label, idx)  # add each working camera
+
+        # ------- FPS ComboBox: only create/add ONCE and BEFORE populating/options --------
+        self.cmb_fps = QtWidgets.QComboBox(self)  # FPS selector
+        self.tb.addWidget(QtWidgets.QLabel("FPS: "))
+        self.tb.addWidget(self.cmb_fps)
+        self.cmb_fps.currentIndexChanged.connect(self.on_fps_change)
+        # Now: populate FPS options!
+        fps_options = [30, 60, 90, 120]  # Or detected dynamically later
+        for fps in fps_options:
+            self.cmb_fps.addItem(f"{fps} fps", fps)
+        self.cmb_fps.setCurrentIndex(0)  # Default to 30 fps
         for idx, label in self._cams: self.cmb_camera.addItem(label, idx)  # add each working camera
         if self._cams:
             default_row = next((r for r,(i,_) in enumerate(self._cams) if i==0), 0)  # prefer index 0 if present
@@ -100,7 +126,13 @@ class MainWindow(QtWidgets.QMainWindow):  # main application window (central con
         else:
             self._current_cam_index = 0  # fallback to 0 even if not working
             self.btn_start.setEnabled(False)  # disable start if no camera
-            QtWidgets.QMessageBox.warning(self, "Camera", "No usable camera found. Plug in a webcam and click Start again.")  # user hint
+            QtWidgets.QMessageBox.warning(self, "Camera",
+                "No usable camera found.\n\nTroubleshooting:\n"
+                "- Is your webcam plugged in?\n"
+                "- Is another app using the camera?\n"
+                "- Try another camera index (dropdown).\n"
+                "- On Linux: try running as sudo if seeing permissions errors."
+            )  # user hint
         self.cmb_camera.currentIndexChanged.connect(self.on_camera_change)  # restart pipeline on camera change
 
         # toolbar order (add widgets/actions in a neat sequence)
@@ -201,6 +233,7 @@ class MainWindow(QtWidgets.QMainWindow):  # main application window (central con
 
     # ---------- session ----------
     def on_session_start(self):
+        self.logger = SessionLogger(mode=self._mode, save_root=SAVE_ROOT_TEMP)
         if self.session_active:
             self.status.showMessage("Session already running"); return  # avoid duplicate starts
         self.logger = SessionLogger(mode=self._mode)  # create new temporary session folder & open files
@@ -237,6 +270,21 @@ class MainWindow(QtWidgets.QMainWindow):  # main application window (central con
             self.session_active = False  # toggle state
             self.btn_session_start.setEnabled(True); self.btn_session_stop.setEnabled(False)  # buttons back
             self.status.showMessage("Session stopped (files saved to temporary folder)")  # feedback
+
+    def export_full_session(self, session_id=None):
+        if not hasattr(self, "logger") or self.logger is None:
+            return
+        import os
+        import shutil
+        from datetime import datetime
+
+        temp_base = self.logger.base  # e.g., 'sessions_tmp/{session_id}'
+
+        if not session_id:
+            session_id = datetime.now().isoformat(timespec='seconds').replace(':', '-')
+        out_dir = os.path.join('sessions', session_id)
+        shutil.move(temp_base, out_dir)
+        print(f"Session exported to {out_dir}")
 
     # ---------- mode/dock ----------
     def _on_guided_dock_visibility(self, visible: bool):
@@ -294,7 +342,12 @@ class MainWindow(QtWidgets.QMainWindow):  # main application window (central con
             while os.path.exists(dest): dest = f"{base_try}_{i}"; i += 1  # avoid collisions by suffixing _2, _3, ...
             os.replace(tmp_dir, dest); return dest  # move directory atomically
         except Exception as e:
-            QtWidgets.QMessageBox.critical(self, "Export error", str(e)); return None  # show error and propagate None
+            QtWidgets.QMessageBox.critical(self, "Export error",
+                f"{str(e)}\n\nCommon issues:\n"
+                "- Lacking permissions to write to the export folder.\n"
+                "- Try running PoseApp as administrator (Windows) or sudo (Linux)."
+            ); return None
+        # show error and propagate None
 
     def on_open_export(self):
         if self.session_active:
@@ -310,6 +363,8 @@ class MainWindow(QtWidgets.QMainWindow):  # main application window (central con
                 if newp: moved.append(os.path.basename(newp))
             if moved:
                 QtWidgets.QMessageBox.information(self, "Export", "Exported:\n- " + "\n- ".join(moved))  # confirmation message
+        self.export_full_session()
+
 
     def _prompt_export_if_pending(self):
         sessions = self._list_temp_sessions()  # auto-detect unexported sessions
@@ -331,7 +386,7 @@ class MainWindow(QtWidgets.QMainWindow):  # main application window (central con
             else:
                 self.choice = BackendChoice(name=BACKEND_MOVENET, variant=self._last_auto_variant)
             #self.choice = BackendChoice()  # init backend choice (default/auto)
-            self.worker = VideoWorker(self.choice, cam_index=self._current_cam_index)  # worker manages camera + model
+            self.worker = VideoWorker(self.choice, cam_index=self._current_cam_index, fps=self._current_fps)  # worker manages camera + model
             self.worker.backend_changed.connect(self.on_backend_changed)  # update label when backend auto-switches
             self.worker.moveToThread(self.worker_thread)  # move worker to thread context
             self.worker.frame_ready.connect(self.on_frame)  # receive processed frame callbacks
@@ -354,11 +409,63 @@ class MainWindow(QtWidgets.QMainWindow):  # main application window (central con
             if self.logger: self.logger.close(); self.logger = None  # close session if left open
             self._guided = None; self.status.showMessage("Stopped")  # clear guided state and notify
 
-    def on_camera_change(self, _i: int):
-        data = self.cmb_camera.currentData()  # new camera index from combo
-        self._current_cam_index = int(data) if data is not None else 0  # update internal index
+    def on_fps_change(self, idx):
+        fps = self.cmb_fps.itemData(idx)
+        self._current_fps = fps
+        # If your video worker uses self._current_fps, it will pick up the new value.
+        # Optionally immediately restart stream:
         if self.worker_thread and self.worker_thread.isRunning():
-            self.on_stop(); self.on_start()  # restart pipeline to apply camera change
+            self.on_stop()
+            self.on_start()
+    
+    def get_camera_fps_options(cam_index):
+        probe_fps = [30, 60, 90, 120]
+        cap = cv2.VideoCapture(cam_index)
+        highest_valid = 30  # Always include 30
+        supported = []
+        for fps in probe_fps:
+            cap.set(cv2.CAP_PROP_FPS, fps)
+            actual = cap.get(cv2.CAP_PROP_FPS)
+            if abs(actual - fps) < 3:
+                supported.append(fps)
+                if actual > highest_valid:
+                    highest_valid = int(round(actual))
+        # Probe extra, above 120 if possible up to a reasonable max
+        for test in range(121, 241, 10):
+            cap.set(cv2.CAP_PROP_FPS, test)
+            actual = cap.get(cv2.CAP_PROP_FPS)
+            if actual > highest_valid and abs(actual - test) < 3:
+                supported.append(test)
+                highest_valid = int(round(actual))
+        cap.release()
+        # Always include 30 and the true max, sorted and unique
+        options = [x for x in probe_fps if x <= highest_valid]
+        if highest_valid not in options:
+            options.append(highest_valid)
+        options = sorted(list(set(options)))
+        return options
+
+    def on_camera_change(self, _i: int):
+        data = self.cmb_camera.currentData()
+        cam_index = int(data) if data is not None else 0
+        self._current_cam_index = cam_index
+        # Repopulate FPS options
+        available_fps = get_camera_fps_options(cam_index)
+        self.cmb_fps.clear()
+        for f in available_fps:
+            self.cmb_fps.addItem(f"{f} fps", f)
+        # Default to 30 if present, else highest
+        idx_30 = self.cmb_fps.findData(30)
+        if idx_30 >= 0:
+            self.cmb_fps.setCurrentIndex(idx_30)
+        else:
+            self.cmb_fps.setCurrentIndex(self.cmb_fps.count() - 1)
+
+        # Optionally restart camera with new settings if livestreaming is running
+        if self.worker_thread and self.worker_thread.isRunning():
+            self.on_stop()
+            self.on_start()
+
     
     def eventFilter(self, obj, event):
         try:
@@ -397,6 +504,11 @@ class MainWindow(QtWidgets.QMainWindow):  # main application window (central con
                 if self.logger: self.logger.close(final_scores=final); self.logger = None  # write final summary and close files
                 self.session_active = False  # clear flag
             self._prompt_export_if_pending()  # remind about exporting any pending sessions
+
+            if os.path.exists("sessions_tmp"):
+                shutil.rmtree("sessions_tmp")
+            super().closeEvent(ev)
+
         finally:
             super().closeEvent(ev)  # call base close
 
@@ -432,8 +544,14 @@ class MainWindow(QtWidgets.QMainWindow):  # main application window (central con
 
     # ---------- errors ----------
     def on_error(self, msg: str):
-        QtWidgets.QMessageBox.critical(self, "Error", f"{msg}\n\nTip: Use the 'Camera' dropdown to pick another index.")  # show error dialog
+        QtWidgets.QMessageBox.critical(self, "Error",
+            f"{msg}\\n\\nTroubleshooting steps:\\n- If camera/model, check if files/devices are present.\\n"
+            "- Full error logs saved in 'sessions/crash_log.txt' (attach in bug report)."
+                )  # show error dialog
         self.on_stop()  # stop pipeline on error (safe state)
+        with open("sessions/crash_log.txt", "a") as f:
+            f.write(f"[{time.asctime()}] {msg}\\n")
+
 
     # ---------- frame loop ----------
     def on_frame(self, frame_bgr, info):
@@ -459,21 +577,47 @@ class MainWindow(QtWidgets.QMainWindow):  # main application window (central con
         kpmap = to_kpmap(kps)  # map name → {x,y,conf}
         from ..geometry.angles import angles_of_interest  # local import avoids import cycles at module load
         ang = angles_of_interest(kpmap)  # compute angles we care about from kpmap
+        raw_angles = ang.copy()
 
-        if not ang:
-            # compute a few staples for plotting as fallback so UI isn’t empty
-            for key in ("knee_L_flex","knee_R_flex","hip_L_flex","hip_R_flex","shoulder_L_abd","shoulder_R_abd","ankle_L_pf","ankle_R_pf"):
-                v = compute_angle_from_kps(key, kpmap)
-                if v is not None and np.isfinite(v): ang[key] = float(v)
+        self._joint_smoothers = {}
+        self._smoothing_alpha = 0.3   # Adjust as needed for responsiveness
+
+        # Inside your on_frame function, after raw angle computation:
+        if not self._joint_smoothers:
+            for k in ang.keys():
+                self._joint_smoothers[k] = ang[k]
+
+        if not hasattr(self, "_one_euro_filters"):
+            self._one_euro_filters = {}
+
+        timestamp = tnow  # monotonic timestamp for current frame
+        smoothed_angles = {}
+
+        for k, raw_val in ang.items():
+            if k not in self._one_euro_filters:
+                # Dynamically add a filter for any new angle name
+                self._one_euro_filters[k] = OneEuro(min_cutoff=1.0, beta=0.0)
+            if raw_val is not None and np.isfinite(raw_val):
+                smoothed_angles[k] = self._one_euro_filters[k].update(raw_val, timestamp)
+            else:
+                smoothed_angles[k] = np.nan  # Or pass through None/NaN for occlusion
+
 
         # send to right panel (plotter)
         self.angles_updated.emit(ang)
 
-        # logging (if a session is active)
+
+        # --- Logging ---
         if self.session_active and self.logger:
-            trel = (tnow - self._t0_mono) if self._t0_mono is not None else 0.0  # relative time from session start
-            self.logger.log_keypoints(trel, getattr(self, "_active_model_label","—"), kps)  # append keypoints row
-            self.logger.log_angles(trel, ang)  # append angles row
+            t = (tnow - self._t0_mono) if self._t0_mono is not None else 0.0  # relative time from session start
+            self.logger.log_keypoints(t, getattr(self, "_active_model_label","—"), kps)  # append keypoints row
+            
+            angle_log_dict = {}
+            joints = list(raw_angles.keys())
+            for joint in joints:
+                angle_log_dict[f"{joint}_raw"] = raw_angles[joint]
+                angle_log_dict[f"{joint}_smoothed"] = smoothed_angles[joint]
+            self.logger.log_angles(t, angle_log_dict)  # append angles row
 
         # gait (compute cadence/steps using ankle verticals and hip width for scale)
         h, w = frame_bgr.shape[:2]  # frame dimensions
@@ -519,30 +663,75 @@ class MainWindow(QtWidgets.QMainWindow):  # main application window (central con
         qimg = cvimg_to_qt(QtGui, cv2, frame_bgr)  # convert cv2 BGR ndarray → QImage
         self.video_label.setPixmap(QtGui.QPixmap.fromImage(qimg))  # display frame in central widget
 
-    # ---- guided orchestration (unchanged logic, just compartmentalized) ----
     def on_start_trial(self, key: str):
-        act = ACTIVITY_LIBRARY[key]  # fetch activity metadata by key
-        getattr(self.guided_panel, 'run_countdown_blocking', lambda *_: None)(5)  # blocking inline countdown (5s)
-        now = time.time()  # wall-clock used for flow stages
-        wait_until = now + 2.0; ready_until = wait_until + 2.0  # WAIT → READY durations
-        cp = CycleParams(baseline_band=8, up_thresh=30, down_thresh=12, min_duration=0.80, max_duration=6.0, peak_hold=0.10) if key=="squat" else CycleParams()  # tuned params for squat, default otherwise
-        self._gif_helper.set_activity_preview(self.guided_panel, key)  # show exercise GIF
-        template = self._load_template_rule(key) if key=="squat" else None  # optional template for squat
-        self._set_idx = 1; self._target_reps = act["reps"]  # reset set/reps counters
-        self._guided = {  # runtime state for guided flow
-            "key": key, "label": act["label"], "primary": act["primary_joints"],
+        act = ACTIVITY_LIBRARY[key]
+        getattr(self.guided_panel, 'run_countdown_blocking', lambda *_: None)(5)
+
+        now = time.time()
+        wait_until = now + 2.0
+        ready_until = wait_until + 2.0
+
+        # Per-activity parameters and template selection
+        if key == "squat":
+            cp = CycleParams(baseline_band=8, up_thresh=30, down_thresh=12, min_duration=0.80, max_duration=6.0, peak_hold=0.10)
+            template = self._load_template_rule("squat")  # e.g. squat_rule_template.json
+            targets = [120, 80]  # Example: target knee/hip angles for squat, customize per schema
+        elif key == "arm_abduction":
+            cp = CycleParams(up_thresh=40, down_thresh=10, min_duration=0.60, max_duration=3.0)
+            template = self._load_template_rule("arm_abduction")
+            targets = [170]  # Shoulder abduction target
+        elif key == "calf_raise":
+            cp = CycleParams(up_thresh=20, down_thresh=5, min_duration=0.40, max_duration=2.0)
+            template = self._load_template_rule("calf_raise")
+            targets = [40]  # Example: ankle plantar flexion
+        elif key == "forward_flexion":
+            cp = CycleParams(up_thresh=60, down_thresh=15, min_duration=0.50, max_duration=3.0)
+            template = self._load_template_rule("forward_flexion")
+            targets = [160]  # Example: target shoulder flexion angle
+        elif key == "jumping_jack":
+            cp = CycleParams(up_thresh=30, down_thresh=12, min_duration=0.50, max_duration=2.0)
+            template = self._load_template_rule("jumping_jack")
+            targets = [160, 30]  # Example: arms and legs
+        else:
+            cp = CycleParams()
+            template = None
+            targets = act["targets"].copy() if "targets" in act else []
+
+        self._set_idx = 1
+        self._target_reps = act["reps"]
+
+        self._guided = {
+            "key": key,
+            "label": act["label"],
+            "primary": act["primary_joints"],
             "score_joint": act.get("score_joint", act["primary_joints"][0]),
-            "targets": act["targets"].copy(), "repdet": RepCycleDetector(params=cp),
+            "targets": targets,
+            "repdet": RepCycleDetector(params=cp),
             "series_by_joint": {j: [] for j in act["primary_joints"]},
-            "angles_series": [], "reps_done": 0, "rep_scores": [],
-            "set_idx": self._set_idx, "reps_target": self._target_reps,
-            "start_time": now, "phase": "WAIT", "wait_until": wait_until, "ready_until": ready_until,
-            "overlay_msg": "wait", "template": template, "kp_snaps": deque(maxlen=400)
+            "angles_series": [],
+            "reps_done": 0,
+            "rep_scores": [],
+            "set_idx": self._set_idx,
+            "reps_target": self._target_reps,
+            "start_time": now,
+            "phase": "WAIT",
+            "wait_until": wait_until,
+            "ready_until": ready_until,
+            "overlay_msg": "wait",
+            "template": template,
+            "kp_snaps": deque(maxlen=400),
         }
-        # show counters in the dock UI
+
+        self._set_activity_preview(key)
+
+        # show counters
         if hasattr(self.guided_panel, "set_counters"):
             self.guided_panel.set_counters(0, self._guided["reps_target"], self._guided["set_idx"])
-        self.status.showMessage(f"Guided: {act['label']} – countdown, then wait/ready/start for {self._guided['reps_target']} reps.")  # feedback
+
+        self.status.showMessage(
+            f"Guided: {act['label']} – 5s countdown, then wait/ready/start flow for {self._guided['reps_target']} reps."
+        )
+
 
     def _overlay_guided_flow(self, frame_bgr, ang, kpmap):
         overlay_guided_flow(self, frame_bgr, ang, kpmap)  # call helper module that handles side locking, bands, rep counting, UI, logging

@@ -1,15 +1,17 @@
 # src/poseapp/io/session_logger.py
 import os, json, time, platform, csv, numpy as np  # core libs
 from typing import Dict, Any, Optional, List  # typing hints
+from datetime import datetime
 
 SAVE_ROOT_FINAL = "sessions"  # final save folder
-SAVE_ROOT_TEMP  = "sessions/sessions_tmp"  # temporary save folder
+SAVE_ROOT_TEMP  = "sessions_tmp"  # temporary save folder
 
 class SessionLogger:
     def __init__(self, mode: str, save_root: str = SAVE_ROOT_TEMP):
-        self.mode = mode  # working mode: guided or freestyle
-        os.makedirs(save_root, exist_ok=True)  # ensure base dir exists
-        self.base = os.path.join(save_root, time.strftime("%Y%m%dT%H%M%S"))  # timestamped folder
+        self.mode = mode
+        os.makedirs(save_root, exist_ok=True)
+        session_id = datetime.now().isoformat(timespec='seconds').replace(':', '-')
+        self.base = os.path.join(save_root, session_id)
         os.makedirs(self.base, exist_ok=True)
 
         # create log files
@@ -39,7 +41,10 @@ class SessionLogger:
     def log_angles(self, t: float, ang: Dict[str, float]):
         for name, val in ang.items():
             side = "L" if "_L_" in name or name.endswith("_L") else "R" if "_R_" in name or name.endswith("_R") else "-"  # side detection
-            self.fp_angles.write(f"{t:.3f},{name},{side},{val if val is not None else 'nan'}\n")  # CSV row per angle
+            #self.fp_angles.write(f"{t:.3f},{name},{side},{val if val is not None else 'nan'}\n")  # CSV row per angle
+            self.fp_angles.write(",".join(["t"] + list(ang.keys())) + "\n")
+            self.fp_angles.write(f"{t}," + ",".join(str(v) for v in ang.values()) + "\n")
+
 
     def log_gait(self, t: float, gait: Dict[str, Any], rel_L=None, rel_R=None):
         si = gait.get("symmetry_index", None)  # optional field

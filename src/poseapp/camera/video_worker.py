@@ -12,7 +12,7 @@ class VideoWorker(QtCore.QObject):
     backend_changed = QtCore.Signal(str)               # emitted when backend switches
     angles_updated  = QtCore.Signal(dict)              # emitted when angles are updated
 
-    def __init__(self, choice: BackendChoice, cam_index: int = 0):
+    def __init__(self, choice: BackendChoice, cam_index: int = 0, fps: int = 30):
         super().__init__()
         self.choice = choice          # backend choice (MoveNet / MediaPipe)
         self.cam_index = int(cam_index)  # initial camera index
@@ -20,25 +20,27 @@ class VideoWorker(QtCore.QObject):
         self.backend = None           # active inference backend
         self.running = False          # control flag for capture loop
         self.cam_api = None           # reserved for API-specific access
+        self._current_fps = fps 
 
     def _open_first_working(self, preferred: int):
-        # Try opening cameras from index 0–9, preferring the given index first
         order = [preferred] + [i for i in range(0, 10) if i != preferred]
         seen = set()
         for idx in order:
             if idx in seen: continue
             seen.add(idx)
             cap = cv2.VideoCapture(idx, cv2.CAP_ANY)
+            if self._current_fps:
+                cap.set(cv2.CAP_PROP_FPS, self._current_fps)   
             ok, frm = cap.isOpened(), None
             ok_read = False
             if ok: ok_read, frm = cap.read()
-            # Return the first camera that opens and reads successfully
             if ok and ok_read:
                 self.cam_index = idx
                 return cap
             try: cap.release()
             except Exception: pass
-        return None  # no working camera found
+        return None
+
 
     def _init_backend(self, choice: BackendChoice):
         # Initialize backend (MediaPipe or MoveNet) based on choice
@@ -67,6 +69,7 @@ class VideoWorker(QtCore.QObject):
             if self.cap is None:
                 self.error.emit("No usable camera. Tried indices 0..10.")
                 return
+            
             # Set capture resolution
             self.cap.set(cv2.CAP_PROP_FRAME_WIDTH,  FRAME_SIZE[0])
             self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_SIZE[1])

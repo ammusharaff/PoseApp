@@ -1,0 +1,1 @@
+[Mon Oct 27 22:00:28 2025] Camera read failed.\n[Tue Oct 28 00:03:58 2025] name 'cap' is not defined\n[Tue Oct 28 00:05:55 2025] 'VideoWorker' object has no attribute '_current_fps'\n[Tue Oct 28 00:29:51 2025] No usable camera. Tried indices 0..10.\n[Tue Oct 28 00:29:53 2025] Camera read failed.\n[Tue Oct 28 01:42:37 2025] Camera read failed.\n

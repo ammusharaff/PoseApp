@@ -32,8 +32,14 @@ class MoveNetBackend(PoseBackend):
          # Resolve whether running from source or PyInstaller (_MEIPASS)
         resolved_model = resource_path(model_path)
         if not os.path.exists(resolved_model):
-            # helpful error to see the *resolved* path
-            raise FileNotFoundError(f"MoveNet model not found: {resolved_model}")
+            raise FileNotFoundError(
+                f"MoveNet model not found: {resolved_model}\n"
+                "Troubleshooting:\n"
+                "- Make sure the .tflite file is present at the correct path.\n"
+                "- Download from the official TensorFlow repo or see README instructions.\n"
+                "- If bundling an AppImage or EXE, ensure model files are included.\n"
+            )
+
 
         self.interpreter = Interpreter(model_path=resolved_model, num_threads=4)
         self.interpreter.allocate_tensors()
