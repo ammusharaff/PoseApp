@@ -47,7 +47,7 @@ from .overlays import (
     draw_mp_hands, draw_mp_holistic_extras
 )  # drawing overlays on the frame
 from ..metrics.side_helpers import overlay_guided_flow  # guided mode flow extracted to helper
-
+from PySide6.QtGui import QIcon
 
 now_mono = time.monotonic  # monotonic clock for stable timing (not affected by system clock)
 
@@ -59,6 +59,69 @@ class MainWindow(QtWidgets.QMainWindow):  # main application window (central con
         self._t0_mono = None  # session start timestamp (monotonic)
         self._t_prev_mono = None  # previous frame time for FPS
         self.setWindowTitle(WINDOW_TITLE)  # set window title from config
+        self.setWindowIcon(QIcon("assets/logo/poseapp_logo.ico"))  # set window icon
+        # Apply dark theme stylesheet
+        self.setStyleSheet("""
+            QMainWindow {
+                background: #E6E9EB;
+                color: #222;
+            }
+            QToolBar {
+                background: #898B8C;
+                border-bottom: 1.5px solid #d4d6db;
+                spacing: 8px;
+                padding: 4px;
+                icon-size: 24px;
+                min-height: 38px;
+            }
+            QPushButton, QComboBox, QLineEdit {
+                background: #DCE0E3;
+                color: #070D2B;
+                border: 1.5px solid #a5a8ad;
+                border-radius: 7px;
+                padding: 7px 18px;
+                font-size: 1.15em;
+                font-weight: bold;
+            }
+            QPushButton:hover, QComboBox:hover, QLineEdit:hover {
+                background: #616469;
+                color: #1340a2;
+                border: 1.5px solid #2684ff;
+            }
+            QPushButton:pressed {
+                background: #bad4fb;
+                color: #222;
+            }
+            QDockWidget, QWidget[panel="true"] {
+                background: #f5f8fc;
+                border-radius: 14px;
+                border: 1.5px solid #dedfe3;
+                margin: 10px;
+                color: #17181a;
+            }
+            QLabel, QCheckBox, QStatusBar, QMenuBar {
+                color: #222;
+                font-size: 1.08em;
+                background: transparent;
+            }
+            QLabel#countdown_lbl {
+                background: #282c34;
+                color: #FFD966;
+                border-radius: 11px;
+                padding: 11px;
+                font-size: 1.5em;
+            }
+            QTableWidget, QTableView {
+                background: #fff;
+                color: #14151a;
+                gridline-color: #eee;
+                alternate-background-color: #f6f7fa;
+                selection-background-color: #3C8DF5;
+                selection-color: #fff;
+            }
+        """)
+
+
         self.resize(1120, 740)  # initial window size
         self.video_label = QtWidgets.QLabel("Starting…\n Click on Start to begin. or press 'S' to start.")  # placeholder text
         self.video_label.setAlignment(QtCore.Qt.AlignCenter)  # center text / later used to show frames
@@ -205,6 +268,7 @@ class MainWindow(QtWidgets.QMainWindow):  # main application window (central con
         self.status.showMessage("Ready. Press Start.")  # status hint
         QtCore.QTimer.singleShot(300, self._prompt_export_if_pending)  # prompt user about unexported sessions (if any)
         self._ensure_guided_panel_hooks()  # populate guided panel (activities, preview, signals)
+        
 
     # ---------- docs ----------
     def _find_docs_index(self) -> Optional[str]:

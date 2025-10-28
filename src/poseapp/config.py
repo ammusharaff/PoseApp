@@ -45,7 +45,7 @@ BACKEND_MEDIAPIPE = "MediaPipe"      # Google MediaPipe Pose — efficient CPU-o
 # Window title displayed in the top bar of the GUI.
 # Can be dynamically updated when switching between modes.
 
-WINDOW_TITLE = "PoseApp – Mode A (Freestyle)"
+WINDOW_TITLE = "PoseApp – Musharaff"
 
 # ------------------ OS-Specific Camera Fix ------------------
 # Some systems (like Windows) require a special flag (cv2.CAP_DSHOW)
